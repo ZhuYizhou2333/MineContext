@@ -35,6 +35,8 @@ declare global {
       getVisibleSources: () => Promise<any[]>
       deleteScreenshot: (filePath: string) => Promise<{ success: boolean; error?: string }>
       readImageAsBase64: (filePath: string) => Promise<{ success: boolean; data?: string; error?: string }>
+      checkInputMonitoringPermissions: () => Promise<boolean>
+      requestInputMonitoringPermissions: () => Promise<boolean>
     }
     fileService: {
       saveFile: (fileName: string, fileData: Uint8Array) => Promise<any>

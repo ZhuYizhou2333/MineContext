@@ -10,7 +10,7 @@ import Logger from 'electron-log/main'
 import { isLinux, isMac, isPortable, isWin } from '@main/constant'
 import { MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH } from '@shared/config/constant'
 import { IpcChannel } from '@shared/IpcChannel'
-import { BrowserWindow, dialog, ipcMain, ProxyConfig, session, shell, systemPreferences } from 'electron'
+import { BrowserWindow, dialog, ipcMain, ProxyConfig, session, shell } from 'electron'
 import { Notification } from 'src/renderer/src/types/notification'
 
 import appService from './services/AppService'
@@ -39,6 +39,7 @@ import { getTrayService } from './index'
 import { type Dayjs } from 'dayjs'
 import AppUpdater from './services/AppUpdater'
 import { HeatmapService } from './services/HeatmapService'
+import MacInputMonitorService from './services/MacInputMonitorService'
 
 const logger = getLogger('IPC')
 
@@ -104,17 +105,20 @@ export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
     appService.setAppLaunchOnBoot(isLaunchOnBoot)
   })
 
-  //only for mac
-  if (isMac) {
-    ipcMain.handle(IpcChannel.App_MacIsProcessTrusted, (): boolean => {
-      return systemPreferences.isTrustedAccessibilityClient(false)
-    })
+  ipcMain.handle(IpcChannel.App_MacIsProcessTrusted, (): boolean => {
+    if (!isMac) {
+      return false
+    }
+    return MacInputMonitorService.checkPermission()
+  })
 
-    //return is only the current state, not the new state
-    ipcMain.handle(IpcChannel.App_MacRequestProcessTrust, (): boolean => {
-      return systemPreferences.isTrustedAccessibilityClient(true)
-    })
-  }
+  // 返回值是当前状态，不是拉起授权后的最新状态
+  ipcMain.handle(IpcChannel.App_MacRequestProcessTrust, (): boolean => {
+    if (!isMac) {
+      return false
+    }
+    return MacInputMonitorService.requestPermission()
+  })
 
   // clear cache
   ipcMain.handle(IpcChannel.App_ClearCache, async () => {

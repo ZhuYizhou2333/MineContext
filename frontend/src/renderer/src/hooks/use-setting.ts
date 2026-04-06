@@ -10,7 +10,25 @@ export const useSetting = () => {
   const dispatch = useAppDispatch()
   const screenSettings = useSelector((state: RootState) => state.setting.screenSettings)
 
-  const { recordInterval, recordingHours, enableRecordingHours, applyToDays } = screenSettings
+  const {
+    intervalEnabled,
+    recordInterval,
+    enableLeftClickCapture,
+    leftClickThreshold,
+    leftClickCooldownSeconds,
+    enableEnterCapture,
+    enterCooldownSeconds,
+    recordingHours,
+    enableRecordingHours,
+    applyToDays
+  } = screenSettings
+
+  const setIntervalEnabled = useCallback(
+    (enabled: boolean) => {
+      dispatch(setScreenSettingsAction({ intervalEnabled: enabled }))
+    },
+    [dispatch]
+  )
 
   const setRecordInterval = useCallback(
     (interval: number) => {
@@ -40,12 +58,59 @@ export const useSetting = () => {
     [dispatch]
   )
 
+  const setEnableLeftClickCapture = useCallback(
+    (enable: boolean) => {
+      dispatch(setScreenSettingsAction({ enableLeftClickCapture: enable }))
+    },
+    [dispatch]
+  )
+
+  const setLeftClickThreshold = useCallback(
+    (threshold: number) => {
+      dispatch(setScreenSettingsAction({ leftClickThreshold: threshold }))
+    },
+    [dispatch]
+  )
+
+  const setLeftClickCooldownSeconds = useCallback(
+    (cooldownSeconds: number) => {
+      dispatch(setScreenSettingsAction({ leftClickCooldownSeconds: cooldownSeconds }))
+    },
+    [dispatch]
+  )
+
+  const setEnableEnterCapture = useCallback(
+    (enable: boolean) => {
+      dispatch(setScreenSettingsAction({ enableEnterCapture: enable }))
+    },
+    [dispatch]
+  )
+
+  const setEnterCooldownSeconds = useCallback(
+    (cooldownSeconds: number) => {
+      dispatch(setScreenSettingsAction({ enterCooldownSeconds: cooldownSeconds }))
+    },
+    [dispatch]
+  )
+
   return {
+    intervalEnabled,
     recordInterval,
+    enableLeftClickCapture,
+    leftClickThreshold,
+    leftClickCooldownSeconds,
+    enableEnterCapture,
+    enterCooldownSeconds,
     recordingHours,
     enableRecordingHours,
     applyToDays,
+    setIntervalEnabled,
     setRecordInterval,
+    setEnableLeftClickCapture,
+    setLeftClickThreshold,
+    setLeftClickCooldownSeconds,
+    setEnableEnterCapture,
+    setEnterCooldownSeconds,
     setEnableRecordingHours,
     setRecordingHours,
     setApplyToDays

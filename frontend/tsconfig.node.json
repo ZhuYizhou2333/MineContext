@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "composite": true,
     "emitDecoratorMetadata": true,

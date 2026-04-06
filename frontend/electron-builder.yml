@@ -39,6 +39,8 @@ mac:
       to: bin/window_inspector
     - from: externals/python/window_capture/dist/window_capture/window_capture
       to: bin/window_capture
+    - from: externals/mac_input_monitor/dist/input_monitor
+      to: bin/input_monitor
   entitlementsInherit: build/entitlements.mac.plist
   icon: build/icon.icns
   extendInfo:

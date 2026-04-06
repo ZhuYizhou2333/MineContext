@@ -1,9 +1,23 @@
 import React from 'react'
-import { Button, Modal, Slider, TimePicker, Radio, Form, Checkbox, Spin, Switch } from '@arco-design/web-react'
+import {
+  Button,
+  Modal,
+  Slider,
+  TimePicker,
+  Radio,
+  Form,
+  Checkbox,
+  Spin,
+  Switch,
+  InputNumber,
+  Typography
+} from '@arco-design/web-react'
 import clsx from 'clsx'
 import { Application } from './application'
 import screenIcon from '@renderer/assets/icons/screen.svg'
 import { ApplyToDays } from '@renderer/store/setting'
+
+const { Text } = Typography
 
 interface SettingsModalProps {
   visible: boolean
@@ -12,14 +26,28 @@ interface SettingsModalProps {
   screenAllSources: any[]
   appAllSources: any[]
   applicationVisible: boolean
+  tempIntervalEnabled: boolean
   tempRecordInterval: number
+  tempEnableLeftClickCapture: boolean
+  tempLeftClickThreshold: number
+  tempLeftClickCooldownSeconds: number
+  tempEnableEnterCapture: boolean
+  tempEnterCooldownSeconds: number
   tempEnableRecordingHours: boolean
   tempRecordingHours: [string, string]
   tempApplyToDays: string
+  isInputMonitoringTrusted: boolean
   onCancel: () => void
   onSave: () => void
+  onRequestInputMonitoringPermission: () => void
   onSetApplicationVisible: (visible: boolean) => void
+  onSetTempIntervalEnabled: (value: boolean) => void
   onSetTempRecordInterval: (value: number) => void
+  onSetTempEnableLeftClickCapture: (value: boolean) => void
+  onSetTempLeftClickThreshold: (value: number) => void
+  onSetTempLeftClickCooldownSeconds: (value: number) => void
+  onSetTempEnableEnterCapture: (value: boolean) => void
+  onSetTempEnterCooldownSeconds: (value: number) => void
   onSetTempEnableRecordingHours: (value: boolean) => void
   onSetTempRecordingHours: (value: [string, string]) => void
   onSetTempApplyToDays: (value: ApplyToDays) => void
@@ -32,14 +60,28 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   screenAllSources,
   appAllSources,
   applicationVisible,
+  tempIntervalEnabled,
   tempRecordInterval,
+  tempEnableLeftClickCapture,
+  tempLeftClickThreshold,
+  tempLeftClickCooldownSeconds,
+  tempEnableEnterCapture,
+  tempEnterCooldownSeconds,
   tempEnableRecordingHours,
   tempRecordingHours,
   tempApplyToDays,
+  isInputMonitoringTrusted,
   onCancel,
   onSave,
+  onRequestInputMonitoringPermission,
   onSetApplicationVisible,
+  onSetTempIntervalEnabled,
   onSetTempRecordInterval,
+  onSetTempEnableLeftClickCapture,
+  onSetTempLeftClickThreshold,
+  onSetTempLeftClickCooldownSeconds,
+  onSetTempEnableEnterCapture,
+  onSetTempEnterCooldownSeconds,
   onSetTempEnableRecordingHours,
   onSetTempRecordingHours,
   onSetTempApplyToDays
@@ -63,25 +105,94 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           </Button>
         </>
       }
-      style={{ width: 682 }}>
+      style={{ width: 760 }}>
       <Form layout="vertical" form={form}>
         <div className="flex w-full flex-1 mt-5">
           <div className="flex flex-col flex-1 pr-[24px]">
-            <Form.Item label="Record Interval" className="[&_.arco-form-item-label]:!text-xs">
-              <Slider
-                value={tempRecordInterval}
-                onChange={(value) => onSetTempRecordInterval(value as number)}
-                min={5}
-                max={300}
-                marks={{
-                  5: '5s',
-                  300: '5min'
-                }}
-                className="!mt-4"
-                formatTooltip={(value) => `${value}s`}
-              />
-            </Form.Item>
-            <Form.Item label="Choose what to record" shouldUpdate>
+            <div className="pb-4 border-b border-[#efeff4]">
+              <div className="text-[15px] leading-[18px] text-[#42464e] mb-[12px] font-medium">Capture Triggers</div>
+              <Form.Item label="Enable interval capture" className="[&_.arco-form-item-label]:!text-xs !mb-2">
+                <Switch
+                  checked={tempIntervalEnabled}
+                  onChange={onSetTempIntervalEnabled}
+                  className={!tempIntervalEnabled ? '[&_.arco-switch]: !bg-[#e2e3ef]' : '[&_.arco-switch]: !bg-black'}
+                />
+              </Form.Item>
+              <Form.Item label="Record Interval" className="[&_.arco-form-item-label]:!text-xs">
+                <Slider
+                  value={tempRecordInterval}
+                  onChange={(value) => onSetTempRecordInterval(value as number)}
+                  min={5}
+                  max={300}
+                  disabled={!tempIntervalEnabled}
+                  marks={{
+                    5: '5s',
+                    300: '5min'
+                  }}
+                  className="!mt-4"
+                  formatTooltip={(value) => `${value}s`}
+                />
+              </Form.Item>
+              <Form.Item label="Enable left click capture" className="[&_.arco-form-item-label]:!text-xs !mb-2">
+                <Switch
+                  checked={tempEnableLeftClickCapture}
+                  onChange={onSetTempEnableLeftClickCapture}
+                  className={
+                    !tempEnableLeftClickCapture ? '[&_.arco-switch]: !bg-[#e2e3ef]' : '[&_.arco-switch]: !bg-black'
+                  }
+                />
+              </Form.Item>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <Form.Item label="Left click threshold" className="[&_.arco-form-item-label]:!text-xs !mb-0">
+                  <InputNumber
+                    min={1}
+                    disabled={!tempEnableLeftClickCapture}
+                    value={tempLeftClickThreshold}
+                    onChange={(value) => onSetTempLeftClickThreshold(Number(value || 1))}
+                  />
+                </Form.Item>
+                <Form.Item label="Left click cooldown (s)" className="[&_.arco-form-item-label]:!text-xs !mb-0">
+                  <InputNumber
+                    min={1}
+                    disabled={!tempEnableLeftClickCapture}
+                    value={tempLeftClickCooldownSeconds}
+                    onChange={(value) => onSetTempLeftClickCooldownSeconds(Number(value || 1))}
+                  />
+                </Form.Item>
+              </div>
+              <Form.Item label="Enable Enter capture" className="[&_.arco-form-item-label]:!text-xs !mb-2">
+                <Switch
+                  checked={tempEnableEnterCapture}
+                  onChange={onSetTempEnableEnterCapture}
+                  className={
+                    !tempEnableEnterCapture ? '[&_.arco-switch]: !bg-[#e2e3ef]' : '[&_.arco-switch]: !bg-black'
+                  }
+                />
+              </Form.Item>
+              <Form.Item label="Enter cooldown (s)" className="[&_.arco-form-item-label]:!text-xs !mb-0">
+                <InputNumber
+                  min={1}
+                  disabled={!tempEnableEnterCapture}
+                  value={tempEnterCooldownSeconds}
+                  onChange={(value) => onSetTempEnterCooldownSeconds(Number(value || 1))}
+                />
+              </Form.Item>
+              <div className="mt-4 p-3 rounded-[8px] bg-[#f7f8fb]">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[13px] text-[#0b0b0f]">Input Monitoring Permission</div>
+                    <Text type={isInputMonitoringTrusted ? 'success' : 'secondary'}>
+                      {isInputMonitoringTrusted ? 'Granted' : 'Required for left click and Enter capture'}
+                    </Text>
+                  </div>
+                  <Button type="outline" size="small" onClick={onRequestInputMonitoringPermission}>
+                    Grant Permission
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <Form.Item label="Choose what to record" shouldUpdate className="mt-4">
               {(values) => {
                 const { screenSources = [], windowSources = [] } = values || {}
                 const screenList = screenAllSources?.filter((source) => screenSources.includes(source.id)) || []

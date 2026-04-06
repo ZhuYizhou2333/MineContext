@@ -6,7 +6,13 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 export type ApplyToDays = 'weekday' | 'everyday'
 
 export const defaultScreenSettings = {
+  intervalEnabled: true,
   recordInterval: 15,
+  enableLeftClickCapture: false,
+  leftClickThreshold: 50,
+  leftClickCooldownSeconds: 60,
+  enableEnterCapture: false,
+  enterCooldownSeconds: 60,
   enableRecordingHours: false,
   recordingHours: ['08:00:00', '20:00:00'] as [string, string],
   applyToDays: 'weekday' as ApplyToDays

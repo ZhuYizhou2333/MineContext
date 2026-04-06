@@ -70,7 +70,13 @@ class ContextOperations:
         return False
 
     def add_screenshot(
-        self, path: str, window: str, create_time: str, app: str, context_processor_callback
+        self,
+        path: str,
+        window: str,
+        create_time: str,
+        app: str,
+        trigger_type: str,
+        context_processor_callback,
     ) -> Optional[str]:
         """Add a screenshot to the system."""
 
@@ -99,6 +105,7 @@ class ContextOperations:
                 additional_info={
                     "window": window,
                     "app": app,
+                    "trigger_type": trigger_type,
                     "duration_count": 1,
                     "screenshot_format": screenshot_format,
                 },

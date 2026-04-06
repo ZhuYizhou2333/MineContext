@@ -89,6 +89,8 @@ interface ScreenMonitorAPI {
     }>
     recent_screenshots: string[]
   } | null>
+  checkInputMonitoringPermissions: () => Promise<boolean>
+  requestInputMonitoringPermissions: () => Promise<boolean>
 }
 
 interface dbAPI {

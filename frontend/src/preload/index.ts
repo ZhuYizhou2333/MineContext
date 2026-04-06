@@ -98,6 +98,8 @@ const screenMonitorAPI = {
   setSettings: (key: string, value: unknown) => ipcRenderer.invoke(IpcChannel.Screen_Monitor_Set_Settings, key, value),
   clearSettings: (key: string) => ipcRenderer.invoke(IpcChannel.Screen_Monitor_Clear_Settings, key),
   getRecordingStats: () => ipcRenderer.invoke(IpcChannel.Screen_Monitor_Get_Recording_Stats),
+  checkInputMonitoringPermissions: () => ipcRenderer.invoke(IpcChannel.App_MacIsProcessTrusted),
+  requestInputMonitoringPermissions: () => ipcRenderer.invoke(IpcChannel.App_MacRequestProcessTrust),
   updateModelConfig: (config: ScreenSettings) =>
     ipcRenderer.invoke(IpcChannel.Task_Update_Model_Config, config),
   startTask: () => ipcRenderer.invoke(IpcChannel.Task_Start),

@@ -26,7 +26,9 @@ class AddScreenshotRequest(BaseModel):
     path: str
     window: str
     create_time: str
+    app: str = ""
     source: str = "unknown"
+    trigger_type: str = "interval"
 
 
 class AddScreenshotsRequest(BaseModel):
@@ -41,7 +43,11 @@ async def add_screenshot(
 ):
     try:
         err_msg = opencontext.add_screenshot(
-            request.path, request.window, request.create_time, request.source
+            request.path,
+            request.window,
+            request.create_time,
+            request.app or request.source,
+            request.trigger_type,
         )
         if err_msg:
             return convert_resp(code=400, status=400, message=err_msg)
@@ -60,7 +66,11 @@ async def add_screenshots(
     try:
         for screenshot in request.screenshots:
             err_msg = opencontext.add_screenshot(
-                screenshot.path, screenshot.window, screenshot.create_time, screenshot.source
+                screenshot.path,
+                screenshot.window,
+                screenshot.create_time,
+                screenshot.app or screenshot.source,
+                screenshot.trigger_type,
             )
             if err_msg:
                 return convert_resp(code=400, status=400, message=err_msg)

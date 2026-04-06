@@ -46,11 +46,23 @@ const ScreenMonitor: React.FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const {
+    intervalEnabled,
     recordInterval,
+    enableLeftClickCapture,
+    leftClickThreshold,
+    leftClickCooldownSeconds,
+    enableEnterCapture,
+    enterCooldownSeconds,
     recordingHours,
     enableRecordingHours,
     applyToDays,
+    setIntervalEnabled,
     setRecordInterval,
+    setEnableLeftClickCapture,
+    setLeftClickThreshold,
+    setLeftClickCooldownSeconds,
+    setEnableEnterCapture,
+    setEnterCooldownSeconds,
     setEnableRecordingHours,
     setRecordingHours,
     setApplyToDays
@@ -97,10 +109,17 @@ const ScreenMonitor: React.FC = () => {
   const isScreenLockedRef = useRef(false)
 
   // Settings form state
+  const [tempIntervalEnabled, setTempIntervalEnabled] = useState(intervalEnabled)
   const [tempRecordInterval, setTempRecordInterval] = useState(recordInterval)
+  const [tempEnableLeftClickCapture, setTempEnableLeftClickCapture] = useState(enableLeftClickCapture)
+  const [tempLeftClickThreshold, setTempLeftClickThreshold] = useState(leftClickThreshold)
+  const [tempLeftClickCooldownSeconds, setTempLeftClickCooldownSeconds] = useState(leftClickCooldownSeconds)
+  const [tempEnableEnterCapture, setTempEnableEnterCapture] = useState(enableEnterCapture)
+  const [tempEnterCooldownSeconds, setTempEnterCooldownSeconds] = useState(enterCooldownSeconds)
   const [tempEnableRecordingHours, setTempEnableRecordingHours] = useState(enableRecordingHours)
   const [tempRecordingHours, setTempRecordingHours] = useState<[string, string]>(recordingHours as [string, string])
   const [tempApplyToDays, setTempApplyToDays] = useState(applyToDays)
+  const [isInputMonitoringTrusted, setIsInputMonitoringTrusted] = useState(false)
 
   // Refresh the application list and trigger a re-render
   const refreshSourcesRead = useMemoizedFn(async () => {
@@ -168,10 +187,35 @@ const ScreenMonitor: React.FC = () => {
     return current && dayjs(current).isAfter(dayjs(), 'day')
   }
 
+  const loadInputMonitoringPermission = useMemoizedFn(async () => {
+    const trusted = await window.screenMonitorAPI.checkInputMonitoringPermissions()
+    setIsInputMonitoringTrusted(!!trusted)
+    return !!trusted
+  })
+
   // Start monitoring session
   const startMonitoring = useMemoizedFn(async () => {
+    if (!intervalEnabled && !enableLeftClickCapture && !enableEnterCapture) {
+      Message.info('Please enable at least one capture trigger in Settings')
+      return
+    }
+
+    if (enableLeftClickCapture || enableEnterCapture) {
+      const trusted = await loadInputMonitoringPermission()
+      if (!trusted) {
+        Message.error('Input Monitoring permission is required for left click or Enter capture')
+        return
+      }
+    }
+
     await window.screenMonitorAPI.updateModelConfig({
+      intervalEnabled,
       recordInterval,
+      enableLeftClickCapture,
+      leftClickThreshold,
+      leftClickCooldownSeconds,
+      enableEnterCapture,
+      enterCooldownSeconds,
       recordingHours,
       enableRecordingHours,
       applyToDays
@@ -366,6 +410,7 @@ const ScreenMonitor: React.FC = () => {
     // Refresh the application list before opening settings
     try {
       setSettingsVisible(true)
+      await loadInputMonitoringPermission()
       await refreshSourcesRead()
     } catch (error) {
       logger.error('Failed to refresh application list', { error })
@@ -374,7 +419,13 @@ const ScreenMonitor: React.FC = () => {
   const [applicationVisible, setApplicationVisible] = useState(false)
 
   const handleCancelSettings = useMemoizedFn(() => {
+    setTempIntervalEnabled(intervalEnabled)
     setTempRecordInterval(recordInterval)
+    setTempEnableLeftClickCapture(enableLeftClickCapture)
+    setTempLeftClickThreshold(leftClickThreshold)
+    setTempLeftClickCooldownSeconds(leftClickCooldownSeconds)
+    setTempEnableEnterCapture(enableEnterCapture)
+    setTempEnterCooldownSeconds(enterCooldownSeconds)
     setTempEnableRecordingHours(enableRecordingHours)
     setTempRecordingHours(recordingHours as [string, string])
     setTempApplyToDays(applyToDays)
@@ -383,7 +434,13 @@ const ScreenMonitor: React.FC = () => {
   })
 
   const handleSaveSettings = useMemoizedFn(() => {
+    setIntervalEnabled(tempIntervalEnabled)
     setRecordInterval(tempRecordInterval)
+    setEnableLeftClickCapture(tempEnableLeftClickCapture)
+    setLeftClickThreshold(tempLeftClickThreshold)
+    setLeftClickCooldownSeconds(tempLeftClickCooldownSeconds)
+    setEnableEnterCapture(tempEnableEnterCapture)
+    setEnterCooldownSeconds(tempEnterCooldownSeconds)
     setEnableRecordingHours(tempEnableRecordingHours)
     setRecordingHours(tempRecordingHours as [string, string])
     setApplyToDays(tempApplyToDays)
@@ -403,6 +460,10 @@ const ScreenMonitor: React.FC = () => {
   useEffect(() => {
     checkCanRecord()
   }, [setCanRecord])
+
+  useEffect(() => {
+    loadInputMonitoringPermission()
+  }, [loadInputMonitoringPermission])
 
   // Periodically check recording status
   useEffect(() => {
@@ -464,6 +525,17 @@ const ScreenMonitor: React.FC = () => {
       Message.info('Please select at least one screen or window')
       return
     }
+    if (!tempIntervalEnabled && !tempEnableLeftClickCapture && !tempEnableEnterCapture) {
+      Message.info('Please enable at least one capture trigger')
+      return
+    }
+    if (
+      (tempEnableLeftClickCapture || tempEnableEnterCapture) &&
+      !(await loadInputMonitoringPermission())
+    ) {
+      Message.error('Input Monitoring permission is required for left click or Enter capture')
+      return
+    }
     const screenList = screenAllSources?.filter((source) => values.screenSources?.includes(source.id)) || []
     const windowList = appAllSources?.filter((source) => values.windowSources?.includes(source.id)) || []
     await window.screenMonitorAPI.setSettings('settings', {
@@ -478,15 +550,42 @@ const ScreenMonitor: React.FC = () => {
   useEffect(() => {
     if (settingSources.state === 'hasData' && sources.state === 'hasData') {
       entry()
+      setTempIntervalEnabled(intervalEnabled)
       setTempRecordInterval(recordInterval)
+      setTempEnableLeftClickCapture(enableLeftClickCapture)
+      setTempLeftClickThreshold(leftClickThreshold)
+      setTempLeftClickCooldownSeconds(leftClickCooldownSeconds)
+      setTempEnableEnterCapture(enableEnterCapture)
+      setTempEnterCooldownSeconds(enterCooldownSeconds)
       setTempEnableRecordingHours(enableRecordingHours)
       setTempRecordingHours(recordingHours as [string, string])
       setTempApplyToDays(applyToDays)
     }
-  }, [settingSources, sources])
+  }, [
+    settingSources,
+    sources,
+    entry,
+    intervalEnabled,
+    recordInterval,
+    enableLeftClickCapture,
+    leftClickThreshold,
+    leftClickCooldownSeconds,
+    enableEnterCapture,
+    enterCooldownSeconds,
+    enableRecordingHours,
+    recordingHours,
+    applyToDays
+  ])
 
   const handleRequestPermission = useMemoizedFn(async () => {
     await grantPermission()
+  })
+
+  const handleRequestInputMonitoringPermission = useMemoizedFn(async () => {
+    await window.screenMonitorAPI.requestInputMonitoringPermissions()
+    window.setTimeout(() => {
+      void loadInputMonitoringPermission()
+    }, 2000)
   })
 
   return (
@@ -554,14 +653,28 @@ const ScreenMonitor: React.FC = () => {
           screenAllSources={screenAllSources}
           appAllSources={appAllSources}
           applicationVisible={applicationVisible}
+          tempIntervalEnabled={tempIntervalEnabled}
           tempRecordInterval={tempRecordInterval}
+          tempEnableLeftClickCapture={tempEnableLeftClickCapture}
+          tempLeftClickThreshold={tempLeftClickThreshold}
+          tempLeftClickCooldownSeconds={tempLeftClickCooldownSeconds}
+          tempEnableEnterCapture={tempEnableEnterCapture}
+          tempEnterCooldownSeconds={tempEnterCooldownSeconds}
           tempEnableRecordingHours={tempEnableRecordingHours}
           tempRecordingHours={tempRecordingHours}
           tempApplyToDays={tempApplyToDays}
+          isInputMonitoringTrusted={isInputMonitoringTrusted}
           onCancel={handleCancelSettings}
           onSave={handleSave}
+          onRequestInputMonitoringPermission={handleRequestInputMonitoringPermission}
           onSetApplicationVisible={setApplicationVisible}
+          onSetTempIntervalEnabled={setTempIntervalEnabled}
           onSetTempRecordInterval={setTempRecordInterval}
+          onSetTempEnableLeftClickCapture={setTempEnableLeftClickCapture}
+          onSetTempLeftClickThreshold={setTempLeftClickThreshold}
+          onSetTempLeftClickCooldownSeconds={setTempLeftClickCooldownSeconds}
+          onSetTempEnableEnterCapture={setTempEnableEnterCapture}
+          onSetTempEnterCooldownSeconds={setTempEnterCooldownSeconds}
           onSetTempEnableRecordingHours={setTempEnableRecordingHours}
           onSetTempRecordingHours={setTempRecordingHours}
           onSetTempApplyToDays={setTempApplyToDays}
